@@ -1,0 +1,100 @@
+Podman Installation, Configuration, Management, and Troubleshooting on RHEL 8.6
+Podman is a daemonless container engine that is a drop-in replacement for Docker.
+It is widely used in RHEL 8.6 as it is built-in and does not require a running daemon.
+1. Installing Podman on RHEL 8.6
+Step 1: Update System Packages
+sudo dnf update -y
+Step 2: Install Podman
+Podman is available in the default RHEL 8 repositories:
+sudo dnf install -y podman
+Step 3: Verify Installation
+podman --version
+Example Output:
+podman version 4.4.1
+Check system details:
+podman info
+2. Configuring Podman
+2.1 Enable Rootless Mode (Optional)
+Podman supports running containers without root privileges, enhancing security.
+Check if your user has the necessary UID mappings:
+cat /etc/subuid
+cat /etc/subgid
+If empty, add a mapping for your user:
+sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER
+Log out and log back in for the changes to take effect.
+3. Managing Containers and Images with Podman
+3.1 Pulling Container Images
+Download an image from a container registry:
+podman pull nginx:latest
+List downloaded images:
+podman images
+3.2 Running a Container
+Start a container from an image:
+podman run -d -p 8080:80 nginx
+This runs nginx in detached mode and maps port 80 inside the container to port 8080 on the host.
+3.3 Listing Running Containers
+podman ps
+To see all containers (including stopped ones):
+podman ps -a
+3.4 Stopping and Removing Containers
+Stop a running container:
+podman stop <CONTAINER_ID>
+Remove a stopped container:
+podman rm <CONTAINER_ID>
+Remove all containers:
+podman rm -a
+3.5 Removing Images
+Remove an image:
+podman rmi <IMAGE_ID>
+Remove all unused images:
+podman image prune -a
+4. Creating and Running Custom Containers with Podman
+docker and podman2 Page 3
+4.1 Writing a Dockerfile for a Flask App
+Create a Dockerfile:
+mkdir flask_app && cd flask_app
+touch Dockerfile
+Edit the Dockerfile and add:
+# Use a lightweight base image
+FROM python:3.9-slim
+# Set the working directory
+WORKDIR /app
+# Copy the application code
+COPY . /app
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+# Expose the Flask port
+EXPOSE 5000
+# Run the Flask app
+CMD ["python", "app.py"]
+4.2 Building and Running the Image
+Build the custom image:
+podman build -t flask_app .
+Run the Flask container:
+podman run -d -p 5000:5000 flask_app
+5. Troubleshooting Podman
+5.1 Checking Logs
+View logs for a specific container:
+podman logs <CONTAINER_ID>
+5.2 Entering a Running Container
+podman exec -it <CONTAINER_ID> /bin/bash
+5.3 Checking Resource Usage
+podman stats
+5.4 Restarting a Container
+podman restart <CONTAINER_ID>
+5.5 Debugging Podman Issues
+Check if your user can run Podman in rootless mode:
+podman system migrate
+Reset Podman storage if needed:
+rm -rf ~/.local/share/containers/
+podman system reset
+6. Podman vs Docker Commands (Cheat Sheet)
+Docker Command Podman Equivalent
+docker pull podman pull
+docker run podman run
+docker ps podman ps
+docker stop podman stop
+docker rm podman rm
+docker images podman images
+docker build podman build
+Now, you are ready to install, configure, manage, and troubleshoot Podman on RHEL 8.6!
