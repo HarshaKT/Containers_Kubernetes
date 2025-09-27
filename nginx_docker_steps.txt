@@ -1,0 +1,96 @@
+?? Install & Manage NGINX using Docker on RHEL 8.6
+
+Step 1: Install Docker on RHEL 8.6
+# Update packages
+sudo dnf update -y
+
+# Add Docker repository
+sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+# Install Docker CE
+sudo dnf install -y docker-ce docker-ce-cli containerd.io
+
+# Start and enable Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Verify Docker installation
+docker --version
+
+Step 2: Pull NGINX Docker Image
+# Search for NGINX images
+docker search nginx
+
+# Pull the official latest NGINX image
+docker pull nginx:latest
+
+# Verify the image is downloaded
+docker images
+
+Step 3: Run NGINX Container
+# Run NGINX on default port 80
+docker run --name mynginx -d -p 80:80 nginx
+
+# Run NGINX with custom HTML content
+docker run --name mynginx -d -p 8080:80 -v /home/user/nginx-html:/usr/share/nginx/html nginx
+Here, /home/user/nginx-html is a directory on your RHEL host where you can put custom index.html.
+
+Step 4: Manage NGINX Container
+# List running containers
+docker ps
+
+# Stop the container
+docker stop mynginx
+
+# Start the container again
+docker start mynginx
+
+# Restart container
+docker restart mynginx
+
+# Remove container
+docker rm -f mynginx
+
+Step 5: Access Logs
+# View logs of NGINX container
+docker logs mynginx
+
+# Follow live logs
+docker logs -f mynginx
+
+Step 6: Exec into NGINX Container
+# Enter the container shell
+docker exec -it mynginx /bin/bash
+
+# Navigate to NGINX config directory
+cd /etc/nginx
+
+# Test NGINX configuration
+nginx -t
+
+# Exit container
+exit
+
+Step 7: Custom NGINX Configurations
+# Mount custom nginx.conf from host
+docker run --name mynginx -d -p 8080:80 \
+  -v /home/user/nginx.conf:/etc/nginx/nginx.conf \
+  nginx
+
+Step 8: Docker Compose (Optional)
+Create a docker-compose.yml:
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    container_name: mynginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-html:/usr/share/nginx/html
+      - ./nginx.conf:/etc/nginx/nginx.conf
+Start with:
+docker-compose up -d
+
+? Now your NGINX is running on RHEL 8.6 using Docker.
+
