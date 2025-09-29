@@ -1,0 +1,42 @@
+Install CRI-O (all nodes) — Kubernetes runtime
+
+Pick CRIO_VERSION to match the Kubernetes minor (see CRI-O docs). Example commands:
+export CRIO_VERSION=1.27    # adjust to the version you want
+
+# Add CRI-O repo (from cri-o official instructions)
+cat <<EOF | sudo tee /etc/yum.repos.d/crio.repo
+[cri-o]
+name=CRI-O
+baseurl=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/repodata/repomd.xml.key
+EOF
+
+# install container-selinux first (may require enabling RHEL AppStream)
+sudo dnf install -y container-selinux || true
+
+# install CRI-O
+sudo dnf install -y cri-o
+
+# enable and start CRI-O
+sudo systemctl daemon-reload
+sudo systemctl enable --now crio
+sudo systemctl status crio --no-pager
+
+
+Make sure CRI-O is running before continuing.
+
+Ensure CRI-O & kubelet use the same cgroup driver
+
+Kubeadm defaults kubelet’s cgroupDriver to systemd. Make CRI-O use systemd:
+
+sudo mkdir -p /etc/crio/crio.conf.d
+cat <<EOF | sudo tee /etc/crio/crio.conf.d/01-cgroup-manager.conf
+[crio.runtime]
+cgroup_manager = "systemd"
+EOF
+
+sudo systemctl restart crio
+
+
