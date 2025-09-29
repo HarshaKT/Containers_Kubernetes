@@ -18,3 +18,10 @@ sudo sysctl --system
 # If this fails, enable the proper RHEL repos or install from the vendor-provided package.
 
 sudo dnf -y install container-selinux
+
+
+# tell kubelet to use systemd cgroups and CRI-O socket
+echo 'KUBELET_EXTRA_ARGS=--cgroup-driver=systemd --container-runtime=remote --container-runtime-endpoint=unix:///var/run/crio/crio.sock' | sudo tee /etc/sysconfig/kubelet
+
+# reload and restart kubelet service (kubelet package not yet installed below)
+sudo systemctl daemon-reload
