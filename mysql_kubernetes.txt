@@ -1,0 +1,152 @@
+*MySQL Deployment in Kubernetes
+
+We’ll use a Deployment, PersistentVolumeClaim (PVC) for storage, and a Service to access MySQL.
+
+
+
+# 🛠️ Step 1: Create a Secret for MySQL Root Password
+
+Best practice is to store sensitive data in a **Secret**:
+
+
+kubectl create secret generic mysql-secret \
+  --from-literal=mysql-root-password=MyRootPass123
+
+
+Check it:
+
+
+kubectl get secrets
+
+
+
+
+# 🛠️ Step 2: Create Persistent Volume Claim (PVC)
+
+This ensures MySQL data persists across restarts.
+
+`mysql-pvc.yaml`:
+
+yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+Apply it:
+
+
+kubectl apply -f mysql-pvc.yaml
+
+
+
+
+#  Step 3: Create MySQL Deployment
+
+`mysql-deployment.yaml`:
+
+yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-root-password
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+
+
+Apply it:
+
+
+kubectl apply -f mysql-deployment.yaml
+
+
+
+
+#  Step 4: Create MySQL Service
+
+Expose MySQL inside the cluster.
+
+`mysql-service.yaml`:
+
+yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+
+Apply it:
+
+
+kubectl apply -f mysql-service.yaml
+
+
+
+
+#  Step 5: Verify
+
+
+kubectl get pods
+kubectl get svc
+kubectl get pvc
+
+
+You should see:
+
+
+NAME       READY   STATUS    RESTARTS   AGE
+mysql-xxx  1/1     Running   0          2m
+
+
+
+
+#  Step 6: Connect to MySQL Pod
+
+
+kubectl exec -it <mysql-pod-name> -- mysql -u root -p  Password = `MyRootPass123` (from secret).
+
+
+
+✅ You now have a working **MySQL deployment with persistent storage**.
+
+
